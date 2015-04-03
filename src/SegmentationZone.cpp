@@ -9,7 +9,10 @@
  * \date March 17, 2015
  */
 
-#include <rail_segmentation/SegmentationZone.h>
+// RAIL Segmentation
+#include "rail_segmentation/SegmentationZone.h"
+
+// C++ Standard Library
 #include <limits>
 
 using namespace std;
