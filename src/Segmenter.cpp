@@ -10,20 +10,24 @@
  * \date March 17, 2015
  */
 
-#include <rail_segmentation/Segmenter.h>
+// RAIL Segmentation
+#include "rail_segmentation/Segmenter.h"
 
+// ROS
 #include <pcl_ros/transforms.h>
 #include <ros/package.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <sensor_msgs/image_encodings.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
+// PCL
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 
+// YAML
 #include <yaml-cpp/yaml.h>
 
 using namespace std;
@@ -31,6 +35,9 @@ using namespace rail::segmentation;
 
 Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
 {
+  // flag for the first point cloud coming in
+  first_pc_in_ = false;
+
   // set defaults
   debug_ = DEFAULT_DEBUG;
   string point_cloud_topic("/camera/depth_registered/points");
@@ -149,11 +156,12 @@ bool Segmenter::okay() const
   return okay_;
 }
 
-void Segmenter::pointCloudCallback(const pcl::PointCloud<pcl::PointXYZRGB> &pc)
+void Segmenter::pointCloudCallback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &pc)
 {
   // lock for the point cloud
   boost::mutex::scoped_lock lock(pc_mutex_);
   // simply store the latest point cloud
+  first_pc_in_ = true;
   pc_ = pc;
 }
 
@@ -206,7 +214,7 @@ bool Segmenter::removeObjectCallback(rail_segmentation::RemoveObject::Request &r
     return true;
   } else
   {
-    ROS_ERROR("Attempted to remove index %d from list of size %d.", req.index, (int) object_list_.objects.size());
+    ROS_ERROR("Attempted to remove index %d from list of size %ld.", req.index, object_list_.objects.size());
     return false;
   }
 }
@@ -234,6 +242,16 @@ bool Segmenter::clearCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Re
 
 bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
+  // check if we have a point cloud first
+  {
+    boost::mutex::scoped_lock lock(pc_mutex_);
+    if (!first_pc_in_)
+    {
+      ROS_WARN("No point cloud received yet. Ignoring segmentation request.");
+      return false;
+    }
+  }
+
   // clear the objects first
   this->clearCallback(req, res);
 
@@ -247,11 +265,11 @@ bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::
   {
     boost::mutex::scoped_lock lock(pc_mutex_);
     // perform the copy/transform using TF
-    pcl_ros::transformPointCloud(zone.getBoundingFrameID(), ros::Time(0), pc_, pc_.header.frame_id,
+    pcl_ros::transformPointCloud(zone.getBoundingFrameID(), ros::Time(0), *pc_, pc_->header.frame_id,
         *transformed_pc, tf_);
     transformed_pc->header.frame_id = zone.getBoundingFrameID();
-    transformed_pc->header.seq = pc_.header.seq;
-    transformed_pc->header.stamp = pc_.header.stamp;
+    transformed_pc->header.seq = pc_->header.seq;
+    transformed_pc->header.stamp = pc_->header.stamp;
   }
 
   // start with every index
@@ -273,7 +291,7 @@ bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::
   }
 
   // check bounding areas (bound the inverse of what we want since PCL will return the removed indicies)
-  pcl::ConditionOr<pcl::PointXYZRGB>::Ptr bounds(new pcl::ConditionOr<pcl::PointXYZRGB>);
+  pcl::ConditionOr<pcl::PointXYZRGB>::Ptr bounds(new pcl::ConditionOr <pcl::PointXYZRGB>);
   if (z_min > -numeric_limits<double>::infinity())
   {
     bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
@@ -323,7 +341,7 @@ bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::
   }
 
   // extract clusters
-  vector<pcl::PointIndices> clusters;
+  vector <pcl::PointIndices> clusters;
   this->extractClusters(transformed_pc, filter_indices, clusters);
 
   if (clusters.size() > 0)
@@ -416,8 +434,9 @@ bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::
   return true;
 }
 
-double Segmenter::findSurface(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pcl::IndicesConstPtr indices_in,
-    const double z_min, const double z_max, pcl::IndicesPtr indices_out) const
+double Segmenter::findSurface(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
+    const pcl::IndicesConstPtr &indices_in, const double z_min, const double z_max,
+    const pcl::IndicesPtr &indices_out) const
 {
   // use a plane (SAC) segmenter
   pcl::SACSegmentation<pcl::PointXYZRGB> plane_seg;
@@ -474,8 +493,8 @@ double Segmenter::findSurface(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pc
   }
 }
 
-void Segmenter::extractClusters(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pcl::IndicesConstPtr indices_in,
-    vector<pcl::PointIndices> &clusters) const
+void Segmenter::extractClusters(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
+    const pcl::IndicesConstPtr &indices_in, vector<pcl::PointIndices> &clusters) const
 {
   // ignore NaN and infinite values
   pcl::IndicesPtr valid(new vector<int>);
@@ -500,7 +519,7 @@ void Segmenter::extractClusters(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, 
   seg.extract(clusters);
 }
 
-sensor_msgs::Image Segmenter::createImage(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in,
+sensor_msgs::Image Segmenter::createImage(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
     const pcl::PointIndices &cluster) const
 {
   // determine the bounds of the cluster
@@ -562,7 +581,7 @@ sensor_msgs::Image Segmenter::createImage(pcl::PointCloud<pcl::PointXYZRGB>::Con
   return msg;
 }
 
-visualization_msgs::Marker Segmenter::createMarker(pcl::PCLPointCloud2::ConstPtr pc) const
+visualization_msgs::Marker Segmenter::createMarker(const pcl::PCLPointCloud2::ConstPtr &pc) const
 {
   visualization_msgs::Marker marker;
   // set header field
@@ -624,8 +643,8 @@ visualization_msgs::Marker Segmenter::createMarker(pcl::PCLPointCloud2::ConstPtr
   return marker;
 }
 
-void Segmenter::extract(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pcl::IndicesConstPtr indices_in,
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr out) const
+void Segmenter::extract(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in, const pcl::IndicesConstPtr &indices_in,
+    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &out) const
 {
   pcl::ExtractIndices<pcl::PointXYZRGB> extract;
   extract.setInputCloud(in);
@@ -633,8 +652,9 @@ void Segmenter::extract(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pcl::Ind
   extract.filter(*out);
 }
 
-void Segmenter::inverseBound(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr in, pcl::IndicesConstPtr indices_in,
-    pcl::ConditionBase<pcl::PointXYZRGB>::Ptr conditions, pcl::IndicesPtr indices_out) const
+void Segmenter::inverseBound(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
+    const pcl::IndicesConstPtr &indices_in, const pcl::ConditionBase<pcl::PointXYZRGB>::Ptr &conditions,
+    const pcl::IndicesPtr &indices_out) const
 {
   // use a temp point cloud to extract the indices
   pcl::PointCloud<pcl::PointXYZRGB> tmp;
