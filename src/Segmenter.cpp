@@ -518,12 +518,16 @@ bool Segmenter::segmentCallback(std_srvs::Empty::Request &req, std_srvs::Empty::
       segmented_object.centroid.z = centroid[2];
 
       // calculate the bounding box
-      int x_idx, y_idx, z_idx;
       Eigen::Vector4f min_pt, max_pt;
       pcl::getMinMax3D(*cluster, min_pt, max_pt);
       segmented_object.width = max_pt[0] - min_pt[0];
       segmented_object.depth = max_pt[1] - min_pt[1];
       segmented_object.height = max_pt[2] - min_pt[2];
+
+      // calculate the center
+      segmented_object.center.x = (max_pt[0] + min_pt[0]) / 2.0;
+      segmented_object.center.y = (max_pt[1] + min_pt[1]) / 2.0;
+      segmented_object.center.z = (max_pt[2] + min_pt[2]) / 2.0;
 
       // add to the final list
       object_list_.objects.push_back(segmented_object);
@@ -766,7 +770,8 @@ void Segmenter::extract(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in, c
 }
 
 void Segmenter::inverseBound(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
-    const pcl::IndicesConstPtr &indices_in, const pcl::ConditionBase<pcl::PointXYZRGB>::Ptr &conditions,
+    const pcl::IndicesConstPtr &indices_in,
+    const pcl::ConditionBase<pcl::PointXYZRGB>::Ptr &conditions,
     const pcl::IndicesPtr &indices_out) const
 {
   // use a temp point cloud to extract the indices
