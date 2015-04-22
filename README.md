@@ -1,3 +1,24 @@
+## rail_segmentation (jade) - 0.1.6-0
+
+The packages in the `rail_segmentation` repository were released into the `jade` distro by running `/usr/bin/bloom-release --rosdistro jade --track jade rail_segmentation` on `Wed, 22 Apr 2015 12:09:13 -0000`
+
+The `rail_segmentation` package was released.
+
+Version of package(s) in repository `rail_segmentation`:
+- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- rosdistro version: `0.1.5-0`
+- old version: `0.1.5-0`
+- new version: `0.1.6-0`
+
+Versions of tools used:
+- bloom version: `0.5.19`
+- catkin_pkg version: `0.2.8`
+- rosdep version: `0.11.2`
+- rosdistro version: `0.4.2`
+- vcstools version: `0.1.36`
+
+
 ## rail_segmentation (jade) - 0.1.5-0
 
 The packages in the `rail_segmentation` repository were released into the `jade` distro by running `/usr/bin/bloom-release --rosdistro jade --track jade rail_segmentation` on `Wed, 15 Apr 2015 14:32:58 -0000`
