@@ -1,3 +1,24 @@
+## rail_segmentation (hydro) - 0.1.8-0
+
+The packages in the `rail_segmentation` repository were released into the `hydro` distro by running `/usr/bin/bloom-release --rosdistro hydro --track hydro rail_segmentation` on `Thu, 14 May 2015 17:17:35 -0000`
+
+The `rail_segmentation` package was released.
+
+Version of package(s) in repository `rail_segmentation`:
+- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- rosdistro version: `0.1.7-0`
+- old version: `0.1.7-0`
+- new version: `0.1.8-0`
+
+Versions of tools used:
+- bloom version: `0.5.20`
+- catkin_pkg version: `0.2.8`
+- rosdep version: `0.11.2`
+- rosdistro version: `0.4.2`
+- vcstools version: `0.1.36`
+
+
 ## rail_segmentation (hydro) - 0.1.7-0
 
 The packages in the `rail_segmentation` repository were released into the `hydro` distro by running `/usr/bin/bloom-release --rosdistro hydro --track hydro rail_segmentation` on `Thu, 07 May 2015 18:16:36 -0000`
