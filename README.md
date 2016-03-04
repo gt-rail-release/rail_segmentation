@@ -5,7 +5,7 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
 - release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.8-0`
 - old version: `0.1.8-0`
@@ -26,7 +26,7 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
 - release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.8-0`
 - old version: `0.1.8-0`
@@ -47,8 +47,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.7-0`
 - old version: `0.1.7-0`
 - new version: `0.1.8-0`
@@ -68,8 +68,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.7-0`
 - old version: `0.1.7-0`
 - new version: `0.1.8-0`
@@ -89,8 +89,8 @@ The packages in the `rail_segmentation` repository were released into the `hydro
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.7-0`
 - old version: `0.1.7-0`
 - new version: `0.1.8-0`
@@ -110,8 +110,8 @@ The packages in the `rail_segmentation` repository were released into the `hydro
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.6-0`
 - old version: `0.1.6-0`
 - new version: `0.1.7-0`
@@ -131,8 +131,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.6-0`
 - old version: `0.1.6-0`
 - new version: `0.1.7-0`
@@ -152,8 +152,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.6-0`
 - old version: `0.1.6-0`
 - new version: `0.1.7-0`
@@ -173,8 +173,8 @@ The packages in the `rail_segmentation` repository were released into the `hydro
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.5-0`
 - old version: `0.1.5-0`
 - new version: `0.1.6-0`
@@ -194,8 +194,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.5-0`
 - old version: `0.1.5-0`
 - new version: `0.1.6-0`
@@ -215,8 +215,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.5-0`
 - old version: `0.1.5-0`
 - new version: `0.1.6-0`
@@ -236,8 +236,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.4-0`
 - old version: `0.1.4-0`
 - new version: `0.1.5-0`
@@ -257,8 +257,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.4-0`
 - old version: `0.1.4-0`
 - new version: `0.1.5-0`
@@ -278,8 +278,8 @@ The packages in the `rail_segmentation` repository were released into the `hydro
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.4-0`
 - old version: `0.1.4-0`
 - new version: `0.1.5-0`
@@ -299,8 +299,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.3-0`
 - old version: `0.1.3-0`
 - new version: `0.1.4-0`
@@ -320,7 +320,7 @@ The packages in the `rail_segmentation` repository were released into the `hydro
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
 - release repository: unknown
 - rosdistro version: `null`
 - old version: `null`
@@ -341,8 +341,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.3-0`
 - old version: `0.1.3-0`
 - new version: `0.1.4-0`
@@ -362,8 +362,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.2-0`
 - old version: `0.1.2-0`
 - new version: `0.1.3-0`
@@ -383,8 +383,8 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.2-0`
 - old version: `0.1.2-0`
 - new version: `0.1.3-0`
@@ -404,7 +404,7 @@ The packages in the `rail_segmentation` repository were released into the `jade`
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
 - release repository: unknown
 - rosdistro version: `null`
 - old version: `null`
@@ -425,8 +425,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.1-0`
 - old version: `0.1.1-0`
 - new version: `0.1.2-0`
@@ -446,8 +446,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.1.0-0`
 - old version: `0.1.0-0`
 - new version: `0.1.1-0`
@@ -467,8 +467,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.0.5-0`
 - old version: `0.0.5-0`
 - new version: `0.1.0-0`
@@ -488,8 +488,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.0.4-0`
 - old version: `0.0.4-0`
 - new version: `0.0.5-0`
@@ -509,8 +509,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.0.3-0`
 - old version: `0.0.3-0`
 - new version: `0.0.4-0`
@@ -530,8 +530,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.0.2-0`
 - old version: `0.0.2-0`
 - new version: `0.0.3-0`
@@ -551,8 +551,8 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
-- release repository: https://github.com/wpi-rail-release/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
 - rosdistro version: `0.0.1-0`
 - old version: `0.0.1-0`
 - new version: `0.0.2-0`
@@ -572,7 +572,7 @@ The packages in the `rail_segmentation` repository were released into the `indig
 The `rail_segmentation` package was released.
 
 Version of package(s) in repository `rail_segmentation`:
-- upstream repository: https://github.com/WPI-RAIL/rail_segmentation.git
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
 - release repository: unknown
 - rosdistro version: `null`
 - old version: `null`
