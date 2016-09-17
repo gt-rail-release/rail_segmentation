@@ -1,5 +1,28 @@
 ## rail_segmentation (indigo) - 0.1.10-0
 
+The packages in the `rail_segmentation` repository were released into the `indigo` distro by running `/usr/bin/bloom-release --rosdistro indigo --track jade rail_segmentation` on `Sat, 17 Sep 2016 15:51:06 -0000`
+
+The `rail_segmentation` package was released.
+
+Version of package(s) in repository `rail_segmentation`:
+
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: https://github.com/gt-rail-release/rail_segmentation.git
+- rosdistro version: `0.1.9-0`
+- old version: `0.1.9-0`
+- new version: `0.1.10-0`
+
+Versions of tools used:
+
+- bloom version: `0.5.22`
+- catkin_pkg version: `0.2.10`
+- rosdep version: `0.11.5`
+- rosdistro version: `0.4.7`
+- vcstools version: `0.1.39`
+
+
+## rail_segmentation (indigo) - 0.1.10-0
+
 The packages in the `rail_segmentation` repository were released into the `indigo` distro by running `/usr/bin/bloom-release --rosdistro indigo --track indigo rail_segmentation` on `Sat, 17 Sep 2016 15:49:32 -0000`
 
 The `rail_segmentation` package was released.
