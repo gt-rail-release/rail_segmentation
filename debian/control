@@ -1,0 +1,12 @@
+Source: ros-kinetic-rail-segmentation
+Section: misc
+Priority: extra
+Maintainer: Russell Toris <russell.toris@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, libyaml-cpp-dev, pkg-config, ros-kinetic-catkin, ros-kinetic-message-generation, ros-kinetic-pcl-conversions, ros-kinetic-pcl-ros, ros-kinetic-rail-manipulation-msgs, ros-kinetic-roscpp, ros-kinetic-roslib, ros-kinetic-sensor-msgs, ros-kinetic-std-srvs, ros-kinetic-tf, ros-kinetic-tf2, ros-kinetic-tf2-ros
+Homepage: http://ros.org/wiki/rail_segmentation
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-rail-segmentation
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, libyaml-cpp-dev, ros-kinetic-message-runtime, ros-kinetic-pcl-conversions, ros-kinetic-pcl-ros, ros-kinetic-rail-manipulation-msgs, ros-kinetic-roscpp, ros-kinetic-roslib, ros-kinetic-sensor-msgs, ros-kinetic-std-srvs, ros-kinetic-tf, ros-kinetic-tf2, ros-kinetic-tf2-ros
+Description: Segmentation Functionality from the RAIL Lab
