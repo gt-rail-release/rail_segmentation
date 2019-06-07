@@ -20,12 +20,10 @@ using namespace rail::segmentation;
 const bool Segmenter::DEFAULT_DEBUG;
 const int Segmenter::DEFAULT_MIN_CLUSTER_SIZE;
 const int Segmenter::DEFAULT_MAX_CLUSTER_SIZE;
+const double Segmenter::CLUSTER_TOLERANCE;
 
 Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
 {
-  // flag for the first point cloud coming in
-  first_pc_in_ = false;
-
   // set defaults
   string point_cloud_topic("/camera/depth_registered/points");
   string zones_file(ros::package::getPath("rail_segmentation") + "/config/zones.yaml");
@@ -34,8 +32,11 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
   private_node_.param("debug", debug_, DEFAULT_DEBUG);
   private_node_.param("min_cluster_size", min_cluster_size_, DEFAULT_MIN_CLUSTER_SIZE);
   private_node_.param("max_cluster_size", max_cluster_size_, DEFAULT_MAX_CLUSTER_SIZE);
+  private_node_.param("cluster_tolerance", cluster_tolerance_, CLUSTER_TOLERANCE);
   private_node_.param("use_color", use_color_, false);
-  private_node_.getParam("point_cloud_topic", point_cloud_topic);
+  private_node_.param("crop_first", crop_first_, false);
+  private_node_.param("label_markers", label_markers_, false);
+  private_node_.param<string>("point_cloud_topic", point_cloud_topic_, "/camera/depth_registered/points");
   private_node_.getParam("zones_config", zones_file);
 
   // setup publishers/subscribers we need
@@ -43,6 +44,8 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
   segment_objects_srv_ = private_node_.advertiseService("segment_objects", &Segmenter::segmentObjectsCallback, this);
   clear_srv_ = private_node_.advertiseService("clear", &Segmenter::clearCallback, this);
   remove_object_srv_ = private_node_.advertiseService("remove_object", &Segmenter::removeObjectCallback, this);
+  calculate_features_srv_ = private_node_.advertiseService("calculate_features", &Segmenter::calculateFeaturesCallback,
+                                                           this);
   segmented_objects_pub_ = private_node_.advertise<rail_manipulation_msgs::SegmentedObjectList>(
       "segmented_objects", 1, true
   );
@@ -51,7 +54,6 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
   );
   markers_pub_ = private_node_.advertise<visualization_msgs::MarkerArray>("markers", 1, true);
   table_marker_pub_ = private_node_.advertise<visualization_msgs::Marker>("table_marker", 1, true);
-  point_cloud_sub_ = node_.subscribe(point_cloud_topic, 1, &Segmenter::pointCloudCallback, this);
   // setup a debug publisher if we need it
   if (debug_)
   {
@@ -75,6 +77,12 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
     if (cur["remove_surface"].IsDefined())
     {
       zone.setRemoveSurface(cur["remove_surface"].as<bool>());
+    }
+
+    // check for the remove surface flag
+    if (cur["require_surface"].IsDefined())
+    {
+      zone.setRequireSurface(cur["require_surface"].as<bool>());
     }
 
     // check for any set limits
@@ -154,6 +162,12 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
       bool remove_surface;
       zones_config[i]["remove_surface"] >> remove_surface;
       zone.setRemoveSurface(remove_surface);
+    }
+    if (zones_config[i].FindValue("require_surface") != NULL)
+    {
+      bool require_surface;
+      zones_config[i]["require_surface"] >> require_surface;
+      zone.setRequireSurface(require_surface);
     }
 
     // check for any set limits
@@ -252,15 +266,6 @@ bool Segmenter::okay() const
   return okay_;
 }
 
-void Segmenter::pointCloudCallback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &pc)
-{
-  // lock for the point cloud
-  boost::mutex::scoped_lock lock(pc_mutex_);
-  // simply store the latest point cloud
-  first_pc_in_ = true;
-  pc_ = pc;
-}
-
 const SegmentationZone &Segmenter::getCurrentZone() const
 {
   // check each zone
@@ -306,7 +311,28 @@ bool Segmenter::removeObjectCallback(rail_segmentation::RemoveObject::Request &r
     segmented_objects_pub_.publish(object_list_);
     // delete marker
     markers_.markers[req.index].action = visualization_msgs::Marker::DELETE;
-    markers_pub_.publish(markers_);
+    if (label_markers_)
+    {
+      text_markers_.markers[req.index].action = visualization_msgs::Marker::DELETE;
+    }
+
+    if (label_markers_)
+    {
+      visualization_msgs::MarkerArray marker_list;
+      marker_list.markers.reserve(markers_.markers.size() + text_markers_.markers.size());
+      marker_list.markers.insert(marker_list.markers.end(), markers_.markers.begin(), markers_.markers.end());
+      marker_list.markers.insert(marker_list.markers.end(), text_markers_.markers.begin(), text_markers_.markers.end());
+      markers_pub_.publish(marker_list);
+    }
+    else
+    {
+      markers_pub_.publish(markers_);
+    }
+
+    if (label_markers_)
+    {
+      text_markers_.markers.erase(text_markers_.markers.begin() + req.index);
+    }
     markers_.markers.erase(markers_.markers.begin() + req.index);
     return true;
   } else
@@ -333,8 +359,32 @@ bool Segmenter::clearCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Re
   {
     markers_.markers[i].action = visualization_msgs::Marker::DELETE;
   }
-  markers_pub_.publish(markers_);
+  if (label_markers_)
+  {
+    for (size_t i = 0; i < text_markers_.markers.size(); i++)
+    {
+      text_markers_.markers[i].action = visualization_msgs::Marker::DELETE;
+    }
+  }
+
+  if (label_markers_)
+  {
+    visualization_msgs::MarkerArray marker_list;
+    marker_list.markers.reserve(markers_.markers.size() + text_markers_.markers.size());
+    marker_list.markers.insert(marker_list.markers.end(), markers_.markers.begin(), markers_.markers.end());
+    marker_list.markers.insert(marker_list.markers.end(), text_markers_.markers.begin(), text_markers_.markers.end());
+    markers_pub_.publish(marker_list);
+  } else
+  {
+    markers_pub_.publish(markers_);
+  }
+
   markers_.markers.clear();
+
+  if (label_markers_)
+  {
+    text_markers_.markers.clear();
+  }
 
   table_marker_.action = visualization_msgs::Marker::DELETE;
   table_marker_pub_.publish(table_marker_);
@@ -355,14 +405,24 @@ bool Segmenter::segmentObjectsCallback(rail_manipulation_msgs::SegmentObjects::R
 
 bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &objects)
 {
-  // check if we have a point cloud first
+  // get the latest point cloud
+  ros::Time request_time = ros::Time::now();
+  ros::Time point_cloud_time = request_time - ros::Duration(0.1);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc(new pcl::PointCloud<pcl::PointXYZRGB>);
+  while (point_cloud_time < request_time)
   {
-    boost::mutex::scoped_lock lock(pc_mutex_);
-    if (!first_pc_in_)
+    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr pc_msg =
+        ros::topic::waitForMessage< pcl::PointCloud<pcl::PointXYZRGB> >(point_cloud_topic_, node_, ros::Duration(10.0));
+    if (pc_msg == NULL)
     {
-      ROS_WARN("No point cloud received yet. Ignoring segmentation request.");
+      ROS_INFO("No point cloud received for segmentation.");
       return false;
     }
+    else
+    {
+      *pc = *pc_msg;
+    }
+    point_cloud_time = pcl_conversions::fromPCL(pc->header.stamp);
   }
 
   // clear the objects first
@@ -375,16 +435,11 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
 
   // transform the point cloud to the fixed frame
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr transformed_pc(new pcl::PointCloud<pcl::PointXYZRGB>);
-  // lock on the point cloud
-  {
-    boost::mutex::scoped_lock lock(pc_mutex_);
-    // perform the copy/transform using TF
-    pcl_ros::transformPointCloud(zone.getBoundingFrameID(), ros::Time(0), *pc_, pc_->header.frame_id,
-                                 *transformed_pc, tf_);
-    transformed_pc->header.frame_id = zone.getBoundingFrameID();
-    transformed_pc->header.seq = pc_->header.seq;
-    transformed_pc->header.stamp = pc_->header.stamp;
-  }
+  pcl_ros::transformPointCloud(zone.getBoundingFrameID(), ros::Time(0), *pc, pc->header.frame_id,
+                               *transformed_pc, tf_);
+  transformed_pc->header.frame_id = zone.getBoundingFrameID();
+  transformed_pc->header.seq = pc->header.seq;
+  transformed_pc->header.stamp = pc->header.stamp;
 
   // start with every index
   pcl::IndicesPtr filter_indices(new vector<int>);
@@ -396,12 +451,21 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
 
   // check if we need to remove a surface
   double z_min = zone.getZMin();
-  if (zone.getRemoveSurface())
+  if (!crop_first_)
   {
-    table_ = this->findSurface(transformed_pc, filter_indices, zone, filter_indices);
-    double z_surface = table_.centroid.z;
-    // check the new bound for Z
-    z_min = max(zone.getZMin(), z_surface + SURFACE_REMOVAL_PADDING);
+    if (zone.getRemoveSurface())
+    {
+      bool surface_found = this->findSurface(transformed_pc, filter_indices, zone, filter_indices, table_);
+      if (zone.getRequireSurface() && !surface_found)
+      {
+        objects.objects.clear();
+        ROS_INFO("Could not find a surface within the segmentation zone.  Exiting segmentation with no objects found.");
+        return true;
+      }
+      double z_surface = table_.centroid.z;
+      // check the new bound for Z
+      z_min = max(zone.getZMin(), z_surface + SURFACE_REMOVAL_PADDING);
+    }
   }
 
   // check bounding areas (bound the inverse of what we want since PCL will return the removed indicies)
@@ -445,6 +509,65 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
 
   // remove past the given bounds
   this->inverseBound(transformed_pc, filter_indices, bounds, filter_indices);
+
+  if (crop_first_)
+  {
+    if (zone.getRemoveSurface())
+    {
+      bool surface_found = this->findSurface(transformed_pc, filter_indices, zone, filter_indices, table_);
+      if (zone.getRequireSurface() && !surface_found)
+      {
+        objects.objects.clear();
+        ROS_INFO("Could not find a surface within the segmentation zone.  Exiting segmentation with no objects found.");
+        return true;
+      }
+      double z_surface = table_.centroid.z;
+      // check the new bound for Z
+      z_min = max(zone.getZMin(), z_surface + SURFACE_REMOVAL_PADDING);
+
+      pcl::ConditionOr<pcl::PointXYZRGB>::Ptr table_bounds(new pcl::ConditionOr<pcl::PointXYZRGB>);
+      table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+          new pcl::FieldComparison<pcl::PointXYZRGB>("z", pcl::ComparisonOps::LE, z_min))
+      );
+
+      // plane segmentation does adds back in the filtered indices, so we need to re-add the old bounds (this should
+      // be faster than conditionally merging the two lists of indices, which would require a bunch of searches the
+      // length of the point cloud's number of points)
+      if (zone.getZMax() < numeric_limits<double>::infinity())
+      {
+        table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+            new pcl::FieldComparison<pcl::PointXYZRGB>("z", pcl::ComparisonOps::GE, zone.getZMax()))
+        );
+      }
+      if (zone.getYMin() > -numeric_limits<double>::infinity())
+      {
+        table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+            new pcl::FieldComparison<pcl::PointXYZRGB>("y", pcl::ComparisonOps::LE, zone.getYMin()))
+        );
+      }
+      if (zone.getYMax() < numeric_limits<double>::infinity())
+      {
+        table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+            new pcl::FieldComparison<pcl::PointXYZRGB>("y", pcl::ComparisonOps::GE, zone.getYMax()))
+        );
+      }
+      if (zone.getXMin() > -numeric_limits<double>::infinity())
+      {
+        table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+            new pcl::FieldComparison<pcl::PointXYZRGB>("x", pcl::ComparisonOps::LE, zone.getXMin()))
+        );
+      }
+      if (zone.getXMax() < numeric_limits<double>::infinity())
+      {
+        table_bounds->addComparison(pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr(
+            new pcl::FieldComparison<pcl::PointXYZRGB>("x", pcl::ComparisonOps::GE, zone.getXMax()))
+        );
+      }
+
+      // remove below the table bounds
+      this->inverseBound(transformed_pc, filter_indices, table_bounds, filter_indices);
+    }
+  }
 
   // publish the filtered and bounded PC pre-segmentation
   if (debug_)
@@ -612,6 +735,36 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
       objects.objects.push_back(segmented_object);
       // add to the markers
       markers_.markers.push_back(segmented_object.marker);
+
+      if (label_markers_)
+      {
+        // create a text marker to label the current marker
+        visualization_msgs::Marker text_marker;
+        text_marker.header = segmented_object.marker.header;
+        text_marker.ns = "segmentation_labels";
+        text_marker.id = i;
+        text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        text_marker.action = visualization_msgs::Marker::ADD;
+
+        text_marker.pose.position.x = segmented_object.center.x;
+        text_marker.pose.position.y = segmented_object.center.y;
+        text_marker.pose.position.z = segmented_object.center.z + 0.05 + segmented_object.height/2.0;
+
+        text_marker.scale.x = .1;
+        text_marker.scale.y = .1;
+        text_marker.scale.z = .1;
+
+        text_marker.color.r = 1;
+        text_marker.color.g = 1;
+        text_marker.color.b = 1;
+        text_marker.color.a = 1;
+
+        stringstream marker_label;
+        marker_label << "i:" << i;
+        text_marker.text = marker_label.str();
+
+        text_markers_.markers.push_back(text_marker);
+      }
     }
 
     // create the new list
@@ -625,7 +778,17 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
     segmented_objects_pub_.publish(object_list_);
 
     // publish the new marker array
-    markers_pub_.publish(markers_);
+    if (label_markers_)
+    {
+      visualization_msgs::MarkerArray marker_list;
+      marker_list.markers.reserve(markers_.markers.size() + text_markers_.markers.size());
+      marker_list.markers.insert(marker_list.markers.end(), markers_.markers.begin(), markers_.markers.end());
+      marker_list.markers.insert(marker_list.markers.end(), text_markers_.markers.begin(), text_markers_.markers.end());
+      markers_pub_.publish(marker_list);
+    } else
+    {
+      markers_pub_.publish(markers_);
+    }
 
     // add to the markers
     table_marker_ = table_.marker;
@@ -644,12 +807,123 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
   return true;
 }
 
-rail_manipulation_msgs::SegmentedObject Segmenter::findSurface(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
-    const pcl::IndicesConstPtr &indices_in, const SegmentationZone &zone,
-    const pcl::IndicesPtr &indices_out) const
+bool Segmenter::calculateFeaturesCallback(rail_manipulation_msgs::ProcessSegmentedObjects::Request &req,
+    rail_manipulation_msgs::ProcessSegmentedObjects::Response &res)
 {
-  rail_manipulation_msgs::SegmentedObject table;
+  res.segmented_objects.header = req.segmented_objects.header;
+  res.segmented_objects.cleared = req.segmented_objects.cleared;
+  res.segmented_objects.objects.resize(req.segmented_objects.objects.size());
 
+  for (size_t i = 0; i < res.segmented_objects.objects.size(); i ++)
+  {
+    // convert to a SegmentedObject message
+    res.segmented_objects.objects[i].recognized = req.segmented_objects.objects[i].recognized;
+
+    // can't recalculate this after initial segmentation has already happened...
+    res.segmented_objects.objects[i].image = req.segmented_objects.objects[i].image;
+
+    // set the point cloud
+    res.segmented_objects.objects[i].point_cloud = req.segmented_objects.objects[i].point_cloud;
+
+    // get point cloud as pcl point cloud
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PCLPointCloud2::Ptr temp_cloud(new pcl::PCLPointCloud2);
+    pcl_conversions::toPCL(res.segmented_objects.objects[i].point_cloud, *temp_cloud);
+    pcl::fromPCLPointCloud2(*temp_cloud, *pcl_cloud);
+
+    // create a marker and set the extra fields
+    res.segmented_objects.objects[i].marker = this->createMarker(temp_cloud);
+    res.segmented_objects.objects[i].marker.id = i;
+
+    // calculate color features
+    Eigen::Vector3f rgb, lab;
+    rgb[0] = res.segmented_objects.objects[i].marker.color.r;
+    rgb[1] = res.segmented_objects.objects[i].marker.color.g;
+    rgb[2] = res.segmented_objects.objects[i].marker.color.b;
+    lab = RGB2Lab(rgb);
+    res.segmented_objects.objects[i].rgb.resize(3);
+    res.segmented_objects.objects[i].cielab.resize(3);
+    res.segmented_objects.objects[i].rgb[0] = rgb[0];
+    res.segmented_objects.objects[i].rgb[1] = rgb[1];
+    res.segmented_objects.objects[i].rgb[2] = rgb[2];
+    res.segmented_objects.objects[i].cielab[0] = lab[0];
+    res.segmented_objects.objects[i].cielab[1] = lab[1];
+    res.segmented_objects.objects[i].cielab[2] = lab[2];
+
+    // set the centroid
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid(*pcl_cloud, centroid);
+    res.segmented_objects.objects[i].centroid.x = centroid[0];
+    res.segmented_objects.objects[i].centroid.y = centroid[1];
+    res.segmented_objects.objects[i].centroid.z = centroid[2];
+
+    // calculate the minimum volume bounding box (assuming the object is resting on a flat surface)
+    res.segmented_objects.objects[i].bounding_volume =
+        BoundingVolumeCalculator::computeBoundingVolume(res.segmented_objects.objects[i].point_cloud);
+
+    // calculate the axis-aligned bounding box
+    Eigen::Vector4f min_pt, max_pt;
+    pcl::getMinMax3D(*pcl_cloud, min_pt, max_pt);
+    res.segmented_objects.objects[i].width = max_pt[0] - min_pt[0];
+    res.segmented_objects.objects[i].depth = max_pt[1] - min_pt[1];
+    res.segmented_objects.objects[i].height = max_pt[2] - min_pt[2];
+
+    // calculate the center
+    res.segmented_objects.objects[i].center.x = (max_pt[0] + min_pt[0]) / 2.0;
+    res.segmented_objects.objects[i].center.y = (max_pt[1] + min_pt[1]) / 2.0;
+    res.segmented_objects.objects[i].center.z = (max_pt[2] + min_pt[2]) / 2.0;
+
+    // calculate the orientation
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr projected_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+    // project point cloud onto the xy plane
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+    coefficients->values.resize(4);
+    coefficients->values[0] = 0;
+    coefficients->values[1] = 0;
+    coefficients->values[2] = 1.0;
+    coefficients->values[3] = 0;
+    pcl::ProjectInliers<pcl::PointXYZRGB> proj;
+    proj.setModelType(pcl::SACMODEL_PLANE);
+    proj.setInputCloud(pcl_cloud);
+    proj.setModelCoefficients(coefficients);
+    proj.filter(*projected_cluster);
+
+    //calculate the Eigen vectors of the projected point cloud's covariance matrix, used to determine orientation
+    Eigen::Vector4f projected_centroid;
+    Eigen::Matrix3f covariance_matrix;
+    pcl::compute3DCentroid(*projected_cluster, projected_centroid);
+    pcl::computeCovarianceMatrixNormalized(*projected_cluster, projected_centroid, covariance_matrix);
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance_matrix, Eigen::ComputeEigenvectors);
+    Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
+    eigen_vectors.col(2) = eigen_vectors.col(0).cross(eigen_vectors.col(1));
+    //calculate rotation from eigenvectors
+    const Eigen::Quaternionf qfinal(eigen_vectors);
+
+    //convert orientation to a single angle on the 2D plane defined by the segmentation coordinate frame
+    tf::Quaternion tf_quat;
+    tf_quat.setValue(qfinal.x(), qfinal.y(), qfinal.z(), qfinal.w());
+    double r, p, y;
+    tf::Matrix3x3 m(tf_quat);
+    m.getRPY(r, p, y);
+    double angle = r + y;
+    while (angle < -M_PI)
+    {
+      angle += 2 * M_PI;
+    }
+    while (angle > M_PI)
+    {
+      angle -= 2 * M_PI;
+    }
+    res.segmented_objects.objects[i].orientation = tf::createQuaternionMsgFromYaw(angle);
+  }
+
+  return true;
+}
+
+bool Segmenter::findSurface(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
+    const pcl::IndicesConstPtr &indices_in, const SegmentationZone &zone, const pcl::IndicesPtr &indices_out,
+    rail_manipulation_msgs::SegmentedObject &table_out) const
+{
   // use a plane (SAC) segmenter
   pcl::SACSegmentation<pcl::PointXYZRGB> plane_seg;
   // set the segmenation parameters
@@ -681,8 +955,8 @@ rail_manipulation_msgs::SegmentedObject Segmenter::findSurface(const pcl::PointC
     {
       ROS_WARN("Could not find a surface above %fm and below %fm.", zone.getZMin(), zone.getZMax());
       *indices_out = *indices_in;
-      table.centroid.z = -numeric_limits<double>::infinity();
-      return table;
+      table_out.centroid.z = -numeric_limits<double>::infinity();
+      return false;
     }
 
     // remove the plane
@@ -720,23 +994,23 @@ rail_manipulation_msgs::SegmentedObject Segmenter::findSurface(const pcl::PointC
       }
 
       // convert to a SegmentedObject message
-      table.recognized = false;
+      table_out.recognized = false;
 
       // set the RGB image
-      table.image = this->createImage(pc_copy, *inliers_ptr);
+      table_out.image = this->createImage(pc_copy, *inliers_ptr);
 
       // check if we want to publish the image
       if (debug_)
       {
-        debug_img_pub_.publish(table.image);
+        debug_img_pub_.publish(table_out.image);
       }
 
       // set the point cloud
-      pcl_conversions::fromPCL(*converted, table.point_cloud);
-      table.point_cloud.header.stamp = ros::Time::now();
+      pcl_conversions::fromPCL(*converted, table_out.point_cloud);
+      table_out.point_cloud.header.stamp = ros::Time::now();
       // create a marker and set the extra fields
-      table.marker = this->createMarker(converted);
-      table.marker.id = 0;
+      table_out.marker = this->createMarker(converted);
+      table_out.marker.id = 0;
 
       // set the centroid
       Eigen::Vector4f centroid;
@@ -747,21 +1021,21 @@ rail_manipulation_msgs::SegmentedObject Segmenter::findSurface(const pcl::PointC
       {
         pcl::compute3DCentroid(plane, centroid);
       }
-      table.centroid.x = centroid[0];
-      table.centroid.y = centroid[1];
-      table.centroid.z = centroid[2];
+      table_out.centroid.x = centroid[0];
+      table_out.centroid.y = centroid[1];
+      table_out.centroid.z = centroid[2];
 
       // calculate the bounding box
       Eigen::Vector4f min_pt, max_pt;
       pcl::getMinMax3D(plane, min_pt, max_pt);
-      table.width = max_pt[0] - min_pt[0];
-      table.depth = max_pt[1] - min_pt[1];
-      table.height = max_pt[2] - min_pt[2];
+      table_out.width = max_pt[0] - min_pt[0];
+      table_out.depth = max_pt[1] - min_pt[1];
+      table_out.height = max_pt[2] - min_pt[2];
 
       // calculate the center
-      table.center.x = (max_pt[0] + min_pt[0]) / 2.0;
-      table.center.y = (max_pt[1] + min_pt[1]) / 2.0;
-      table.center.z = (max_pt[2] + min_pt[2]) / 2.0;
+      table_out.center.x = (max_pt[0] + min_pt[0]) / 2.0;
+      table_out.center.y = (max_pt[1] + min_pt[1]) / 2.0;
+      table_out.center.z = (max_pt[2] + min_pt[2]) / 2.0;
 
 
       // calculate the orientation
@@ -812,9 +1086,9 @@ rail_manipulation_msgs::SegmentedObject Segmenter::findSurface(const pcl::PointC
       {
         angle -= 2 * M_PI;
       }
-      table.orientation = tf::createQuaternionMsgFromYaw(angle);
+      table_out.orientation = tf::createQuaternionMsgFromYaw(angle);
 
-      return table;
+      return true;
     }
   }
 }
@@ -836,7 +1110,7 @@ void Segmenter::extractClustersEuclidean(const pcl::PointCloud<pcl::PointXYZRGB>
   pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> seg;
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kd_tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
   kd_tree->setInputCloud(in);
-  seg.setClusterTolerance(CLUSTER_TOLERANCE);
+  seg.setClusterTolerance(cluster_tolerance_);
   seg.setMinClusterSize(min_cluster_size_);
   seg.setMaxClusterSize(max_cluster_size_);
   seg.setSearchMethod(kd_tree);
@@ -846,7 +1120,7 @@ void Segmenter::extractClustersEuclidean(const pcl::PointCloud<pcl::PointXYZRGB>
 }
 
 void Segmenter::extractClustersRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in,
-                                   const pcl::IndicesConstPtr &indices_in, vector<pcl::PointIndices> &clusters) const
+    const pcl::IndicesConstPtr &indices_in, vector<pcl::PointIndices> &clusters) const
 {
   // ignore NaN and infinite values
   pcl::IndicesPtr valid(new vector<int>);
@@ -863,7 +1137,7 @@ void Segmenter::extractClustersRGB(const pcl::PointCloud<pcl::PointXYZRGB>::Cons
   kd_tree->setInputCloud(in);
   seg.setPointColorThreshold(POINT_COLOR_THRESHOLD);
   seg.setRegionColorThreshold(REGION_COLOR_THRESHOLD);
-  seg.setDistanceThreshold(CLUSTER_TOLERANCE);
+  seg.setDistanceThreshold(cluster_tolerance_);
   seg.setMinClusterSize(min_cluster_size_);
   seg.setMaxClusterSize(max_cluster_size_);
   seg.setSearchMethod(kd_tree);
