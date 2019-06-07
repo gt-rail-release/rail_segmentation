@@ -1,0 +1,12 @@
+Source: ros-melodic-rail-segmentation
+Section: misc
+Priority: extra
+Maintainer: Russell Toris <russell.toris@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, libyaml-cpp-dev, pkg-config, ros-melodic-catkin, ros-melodic-message-generation, ros-melodic-pcl-conversions, ros-melodic-pcl-ros, ros-melodic-rail-manipulation-msgs, ros-melodic-roscpp, ros-melodic-roslib, ros-melodic-sensor-msgs, ros-melodic-std-srvs, ros-melodic-tf, ros-melodic-tf2, ros-melodic-tf2-ros
+Homepage: http://ros.org/wiki/rail_segmentation
+Standards-Version: 3.9.2
+
+Package: ros-melodic-rail-segmentation
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, libyaml-cpp-dev, ros-melodic-message-runtime, ros-melodic-pcl-conversions, ros-melodic-pcl-ros, ros-melodic-rail-manipulation-msgs, ros-melodic-roscpp, ros-melodic-roslib, ros-melodic-sensor-msgs, ros-melodic-std-srvs, ros-melodic-tf, ros-melodic-tf2, ros-melodic-tf2-ros
+Description: Segmentation Functionality from the RAIL Lab
