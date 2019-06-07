@@ -1,3 +1,26 @@
+## rail_segmentation (melodic) - 0.1.13-1
+
+The packages in the `rail_segmentation` repository were released into the `melodic` distro by running `/usr/bin/bloom-release rail_segmentation --track melodic --rosdistro melodic --new-track` on `Fri, 07 Jun 2019 18:27:48 -0000`
+
+The `rail_segmentation` package was released.
+
+Version of package(s) in repository `rail_segmentation`:
+
+- upstream repository: https://github.com/GT-RAIL/rail_segmentation.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `0.1.13-1`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.12`
+- rosdep version: `0.15.1`
+- rosdistro version: `0.7.4`
+- vcstools version: `0.1.40`
+
+
 ## rail_segmentation (kinetic) - 0.1.12-0
 
 The packages in the `rail_segmentation` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic rail_segmentation --new-track` on `Fri, 12 Oct 2018 20:09:31 -0000`
