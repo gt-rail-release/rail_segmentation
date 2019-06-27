@@ -24,8 +24,10 @@ const double Segmenter::CLUSTER_TOLERANCE;
 
 Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
 {
+  // flag for using the provided point cloud
+
   // set defaults
-  string point_cloud_topic("/camera/depth_registered/points");
+  string point_cloud_topic("/head_camera/depth_registered/points");
   string zones_file(ros::package::getPath("rail_segmentation") + "/config/zones.yaml");
 
   // grab any parameters we need
@@ -36,12 +38,13 @@ Segmenter::Segmenter() : private_node_("~"), tf2_(tf_buffer_)
   private_node_.param("use_color", use_color_, false);
   private_node_.param("crop_first", crop_first_, false);
   private_node_.param("label_markers", label_markers_, false);
-  private_node_.param<string>("point_cloud_topic", point_cloud_topic_, "/camera/depth_registered/points");
+  private_node_.param<string>("point_cloud_topic", point_cloud_topic_, "/head_camera/depth_registered/points");
   private_node_.getParam("zones_config", zones_file);
 
   // setup publishers/subscribers we need
   segment_srv_ = private_node_.advertiseService("segment", &Segmenter::segmentCallback, this);
   segment_objects_srv_ = private_node_.advertiseService("segment_objects", &Segmenter::segmentObjectsCallback, this);
+  segment_objects_from_point_cloud_srv_ = private_node_.advertiseService("segment_objects_from_point_cloud", &Segmenter::segmentObjectsFromPointCloudCallback, this);
   clear_srv_ = private_node_.advertiseService("clear", &Segmenter::clearCallback, this);
   remove_object_srv_ = private_node_.advertiseService("remove_object", &Segmenter::removeObjectCallback, this);
   calculate_features_srv_ = private_node_.advertiseService("calculate_features", &Segmenter::calculateFeaturesCallback,
@@ -403,16 +406,28 @@ bool Segmenter::segmentObjectsCallback(rail_manipulation_msgs::SegmentObjects::R
   return segmentObjects(res.segmented_objects);
 }
 
+bool Segmenter::segmentObjectsFromPointCloudCallback(rail_manipulation_msgs::SegmentObjectsFromPointCloud::Request &req,
+                                                     rail_manipulation_msgs::SegmentObjectsFromPointCloud::Response &res)
+{
+  // convert pc from sensor_msgs::PointCloud2 to pcl::PointCloud<pcl::PointXYZRGB>
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+  pcl::fromROSMsg(req.point_cloud, *pc);
+
+  return executeSegmentation(pc, res.segmented_objects);
+}
+
 bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &objects)
 {
   // get the latest point cloud
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc(new pcl::PointCloud<pcl::PointXYZRGB>);
   ros::Time request_time = ros::Time::now();
   ros::Time point_cloud_time = request_time - ros::Duration(0.1);
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc(new pcl::PointCloud<pcl::PointXYZRGB>);
   while (point_cloud_time < request_time)
   {
     pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr pc_msg =
-        ros::topic::waitForMessage< pcl::PointCloud<pcl::PointXYZRGB> >(point_cloud_topic_, node_, ros::Duration(10.0));
+        ros::topic::waitForMessage<pcl::PointCloud<pcl::PointXYZRGB> >(point_cloud_topic_, node_,
+                                                                       ros::Duration(10.0));
     if (pc_msg == NULL)
     {
       ROS_INFO("No point cloud received for segmentation.");
@@ -425,6 +440,12 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
     point_cloud_time = pcl_conversions::fromPCL(pc->header.stamp);
   }
 
+  return executeSegmentation(pc, objects);
+}
+
+bool Segmenter::executeSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc,
+    rail_manipulation_msgs::SegmentedObjectList &objects)
+{
   // clear the objects first
   std_srvs::Empty empty;
   this->clearCallback(empty.request, empty.response);
@@ -591,11 +612,14 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
     // check each cluster
     for (size_t i = 0; i < clusters.size(); i++)
     {
+      // Keep track of image indices of points in the cluster
+      vector<int> cluster_indices;
       // grab the points we need
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
       for (size_t j = 0; j < clusters[i].indices.size(); j++)
       {
         cluster->points.push_back(transformed_pc->points[clusters[i].indices[j]]);
+        cluster_indices.push_back(clusters[i].indices[j]);
       }
       cluster->width = cluster->points.size();
       cluster->height = 1;
@@ -622,6 +646,8 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
       // convert to a SegmentedObject message
       rail_manipulation_msgs::SegmentedObject segmented_object;
       segmented_object.recognized = false;
+      // store the indices of the object
+      segmented_object.image_indices = cluster_indices;
 
       // set the RGB image
       segmented_object.image = this->createImage(transformed_pc, clusters[i]);
@@ -803,8 +829,6 @@ bool Segmenter::segmentObjects(rail_manipulation_msgs::SegmentedObjectList &obje
   {
     ROS_WARN("No segmented objects found.");
   }
-
-  return true;
 }
 
 bool Segmenter::calculateFeaturesCallback(rail_manipulation_msgs::ProcessSegmentedObjects::Request &req,
